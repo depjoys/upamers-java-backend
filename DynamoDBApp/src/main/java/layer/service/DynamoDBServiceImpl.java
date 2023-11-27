@@ -86,6 +86,23 @@ public class DynamoDBServiceImpl implements DynamoDBService {
         and update it in the table record according to provided parameters.
         Returns a text message as operation result.
         */
+
+        User existingUser = dynamoDBMapper.load(User.class, pathParameters.get(TABLE_PARTITION_KEY));
+        if (existingUser == null) {
+            return getJsonResponse("User not found");
+        }
+
+        User inputUser = new Gson().fromJson(inputBody, User.class);
+        if(inputUser.getSocialMedia()!=null){
+            if(!isValidSocialMedia(inputUser.getSocialMedia())){
+                return getJsonResponse("User with such social media links cannot be updated");
+            }
+        }
+
+        updateUsersNotNullAttributes(existingUser, inputUser);
+
+        dynamoDBMapper.save(existingUser);
+        return getJsonResponse("User updated: " + existingUser.getEmail());
     }
 
     @Override
